@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf8">
+		<title>Schach Test</title>
+		<style>
+			*
+			{
+				padding: 0;
+				margin: 0;
+				border-width: 0 !important;
+				border-style: none !important;
+				border-color: black;
+			}
+			.tile
+			{
+				width: 50px;
+				height: 50px;
+			}
+			.white_tile
+			{
+				background-color: #EFE5CC
+			}
+			.black_tile
+			{
+				background-color: #700c0e
+			}
+			.selected
+			{
+				background-color: grey
+			}
+			td>img
+			{
+				margin-left: 2.5px;
+				margin-right: 2.5px;
+				width: 45px;
+				height: 45px;
+			}
+		</style>
+	</head>
+	<body>
+		<table>
+			<tr>
+				<td class="tile white_tile"><img src="white_rook.svg" alt="white rook"></td>
+				<td class="tile black_tile"><img src="white_knight.svg" alt="white knight"></td>
+				<td class="tile white_tile"><img src="white_bishop.svg" alt="white bishop"></td>
+				<td class="tile black_tile"><img src="white_king.svg" alt="white king"></td>
+				<td class="tile white_tile"><img src="white_queen.svg" alt="white queen"></td>
+				<td class="tile black_tile"><img src="white_bishop.svg" alt="white bishop"></td>
+				<td class="tile white_tile"><img src="white_knight.svg" alt="white knight"></td>
+				<td class="tile black_tile"><img src="white_rook.svg" alt="white rook"></td>
+			</tr>
+			<tr>
+				<td class="tile black_tile"><img src="white_pawn.svg" alt="white pawn"></td>
+				<td class="tile white_tile"><img src="white_pawn.svg" alt="white pawn"></td>
+				<td class="tile black_tile"><img src="white_pawn.svg" alt="white pawn"></td>
+				<td class="tile white_tile"><img src="white_pawn.svg" alt="white pawn"></td>
+				<td class="tile black_tile"><img src="white_pawn.svg" alt="white pawn"></td>
+				<td class="tile white_tile"><img src="white_pawn.svg" alt="white pawn"></td>
+				<td class="tile black_tile"><img src="white_pawn.svg" alt="white pawn"></td>
+				<td class="tile white_tile"><img src="white_pawn.svg" alt="white pawn"></td>
+			</tr>
+			<tr>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+			</tr>
+			<tr>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+			</tr>
+			<tr>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+			</tr>
+			<tr>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+				<td class="tile black_tile"></td>
+				<td class="tile white_tile"></td>
+			</tr>
+			<tr>
+				<td class="tile white_tile"><img src="black_pawn.svg" alt="black pawn"></td>
+				<td class="tile black_tile"><img src="black_pawn.svg" alt="black pawn"></td>
+				<td class="tile white_tile"><img src="black_pawn.svg" alt="black pawn"></td>
+				<td class="tile black_tile"><img src="black_pawn.svg" alt="black pawn"></td>
+				<td class="tile white_tile"><img src="black_pawn.svg" alt="black pawn"></td>
+				<td class="tile black_tile"><img src="black_pawn.svg" alt="black pawn"></td>
+				<td class="tile white_tile"><img src="black_pawn.svg" alt="black pawn"></td>
+				<td class="tile black_tile"><img src="black_pawn.svg" alt="black pawn"></td>
+			</tr>
+			<tr>
+				<td class="tile black_tile"><img src="black_rook.svg" alt="black rook"></td>
+				<td class="tile white_tile"><img src="black_knight.svg" alt="black knight"></td>
+				<td class="tile black_tile"><img src="black_bishop.svg" alt="black bishop"></td>
+				<td class="tile white_tile"><img src="black_king.svg" alt="black king"></td>
+				<td class="tile black_tile"><img src="black_queen.svg" alt="black queen"></td>
+				<td class="tile white_tile"><img src="black_bishop.svg" alt="black bishop"></td>
+				<td class="tile black_tile"><img src="black_knight.svg" alt="black knight"></td>
+				<td class="tile white_tile"><img src="black_rook.svg" alt="black rook"></td>
+			</tr>
+		</table>
+	</body>
+	<script>
+		let tiles = document.getElementsByClassName("tile");
+		
+		let selected_tile = undefined;
+		for(let i = 0; i < tiles.length; ++i)
+		{
+			tiles[i].position = i;
+			tiles[i].addEventListener(
+				"click",
+				function()
+				{
+					if(selected_tile == this)
+					{
+						this.classList.remove("selected");
+						selected_tile = undefined;
+						return;
+					}
+					if(selected_tile != undefined)
+					{
+						if(this.childElementCount != 0)
+						{
+							this.removeChild(this.firstChild);
+						}
+						this.appendChild(selected_tile.firstChild);
+
+						selected_tile.classList.remove("selected");
+						selected_tile = undefined;
+						return;
+					}
+					if(this.childElementCount)
+					{
+						this.classList.add("selected");
+						selected_tile = this;
+					}
+				});
+		}
+	</script>
+</html>
