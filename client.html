@@ -126,52 +126,124 @@
 		let tiles = document.getElementsByClassName("tile");
 		
 		let selected_tile = undefined;
+		let current_player = "white";
 		for(let i = 0; i < tiles.length; ++i)
 		{
-			tiles[i].position = i;
+			tiles[i].is_reachable =
+			function(tile)
+			{
+				if(tile.firstChild.alt.includes("pawn"))
+				{
+					if(!this.hasChildNodes())
+					{
+						if(tile.firstChild.alt.includes("black"))
+						{
+							return tile.position.column === this.position.column &&
+							       (tile.position.row - this.position.row === 1 ||
+											tile.position.row === 6 &&
+											tile.position.row - this.position.row === 2);
+						}
+						else
+						{
+							return tile.position.column === this.position.column &&
+								     (tile.position.row - this.position.row === -1 ||
+							        tile.position.row === 1 &&
+							        tile.position.row - this.position.row === -2);
+						}
+					}
+					else
+					{
+						if(tile.firstChild.alt.includes("black"))
+						{
+							return Math.abs(tile.position.column - this.position.column) === 1 &&
+							       tile.position.row - this.position.row === 1;
+						}
+						else
+						{
+							return Math.abs(tile.position.column - this.position.column) === 1 &&
+							       tile.position.row - this.position.row === -1;
+						}
+					}
+				}
+				else if(tile.firstChild.alt.includes("rook"))
+				{
+					return true;
+				}
+				else if(tile.firstChild.alt.includes("knight"))
+				{
+					return true;
+				}
+				else if(tile.firstChild.alt.includes("bishop"))
+				{
+					return true;
+				}
+				else if(tile.firstChild.alt.includes("king"))
+				{
+					return true;
+				}
+				else if(tile.firstChild.alt.includes("queen"))
+				{
+					return true;
+				}
+				else
+				{
+					console.error("This should never happen.");
+					console.error(tile);
+					return false;
+				}
+			}
+			tiles[i].position = {"row" : Math.floor(i / 8), "column" : i % 8};
 			tiles[i].addEventListener(
 				"click",
 				function()
 				{
-					if(selected_tile == this)
+					if(selected_tile === this)
 					{
 						this.classList.remove("selected");
 						selected_tile = undefined;
 						return;
 					}
-					if(selected_tile != undefined)
+
+					if(selected_tile !== undefined)
 					{
-						if(selected_tile.firstChild.classList.contains("black"))
-						{
-							if(this.firstChild.classList.contains("black"))
-							{
-								selected_tile.classList.remove("selected");
-								selected_tile = this;
-								selected_tile.classList.add("selected");
-								return;
-							}
-						}
-						else
-						{
-							if(this.firstChild.classList.contains("white"))
-							{
-								selected_tile.classList.remove("selected");
-								selected_tile = this;
-								selected_tile.classList.add("selected");
-								return;
-							}
-						}
 						if(this.childElementCount != 0)
 						{
+							if(selected_tile.firstChild.classList[0] === this.firstChild.classList[0])
+							{
+								selected_tile.classList.remove("selected");
+								selected_tile = this;
+								selected_tile.classList.add("selected");
+								return;
+							}
+
+							if(!this.is_reachable(selected_tile))
+							{
+								return;
+							}
 							this.removeChild(this.firstChild);
+							this.appendChild(selected_tile.firstChild);
+
+							selected_tile.classList.remove("selected");
+							selected_tile = undefined;
+							current_player = current_player === "white" ? "black" : "white";
+							return;
+						}
+
+						if(!this.is_reachable(selected_tile))
+						{
+							return;
 						}
 						this.appendChild(selected_tile.firstChild);
 
 						selected_tile.classList.remove("selected");
 						selected_tile = undefined;
+						current_player = current_player === "white" ? "black" : "white";
 						return;
 					}
-					if(this.childElementCount)
+
+					if(
+						this.childElementCount
+						&& this.firstChild.classList.contains(current_player))
 					{
 						this.classList.add("selected");
 						selected_tile = this;
