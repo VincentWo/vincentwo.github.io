@@ -179,7 +179,8 @@
 				}
 				else if(tile.firstChild.alt.includes("king"))
 				{
-					return true;
+					return Math.abs(tile.position.column - this.position.column) <= 1 &&
+						     Math.abs(tile.position.row - this.position.row) <= 1;
 				}
 				else if(tile.firstChild.alt.includes("queen"))
 				{
