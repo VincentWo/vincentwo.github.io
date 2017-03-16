@@ -129,7 +129,7 @@
 		let current_player = "white";
 		for(let i = 0; i < tiles.length; ++i)
 		{
-			tiles[i].is_reachable =
+			tiles[i].is_reachable_from =
 			function(tile)
 			{
 				if(tile.firstChild.alt.includes("pawn"))
@@ -167,15 +167,94 @@
 				}
 				else if(tile.firstChild.alt.includes("rook"))
 				{
-					return true;
+					if(this.position.row === tile.position.row)
+					{
+						let lower_position =
+							Math.min(this.position.offset(), tile.position.offset()) + 1;
+						let higher_position =
+							Math.max(this.position.offset(), tile.position.offset());
+
+						for(;lower_position < higher_position; ++lower_position)
+						{
+							if(tiles[lower_position].hasChildNodes())
+							{
+								return false;
+							}
+						}
+						return true;
+					}
+					else if(this.position.column === tile.position.column)
+					{
+						let lower_position =
+							Math.min(this.position.offset(), tile.position.offset()) + 8;
+						let higher_position =
+							Math.max(this.position.offset(), tile.position.offset());
+
+						for(;lower_position < higher_position; lower_position += 8)
+						{
+							if(tiles[lower_position].hasChildNodes())
+							{
+								return false;
+							}
+						}
+						return true;
+					}
+					else
+					{
+						return false;
+					}
 				}
 				else if(tile.firstChild.alt.includes("knight"))
 				{
-					return true;
+					return Math.abs(tile.position.column - this.position.column) === 1 &&
+					       Math.abs(tile.position.row - this.position.row) === 2 ||
+				         Math.abs(tile.position.column - this.position.column) === 2 &&
+					       Math.abs(tile.position.row - this.position.row) === 1;
 				}
 				else if(tile.firstChild.alt.includes("bishop"))
 				{
-					return true;
+					if(
+						Math.abs(tile.position.column - this.position.column) ===
+						Math.abs(tile.position.row - this.position.row))
+					{
+						let lower_position =
+							Math.min(this.position.offset(), tile.position.offset());
+						let higher_position =
+							Math.max(this.position.offset(), tile.position.offset());
+
+						if(this.position.column < tile.position.column)
+						{
+							for(
+								let position = lower_position + 7;
+								position < higher_position;
+								position += 7)
+							{
+								if(tiles[position].hasChildNodes())
+								{
+									return false;
+								}
+							}
+							return true;
+						}
+						else
+						{
+							for(
+								let position = lower_position + 9;
+								position < higher_position;
+								position += 9)
+							{
+								if(tiles[position].hasChildNodes())
+								{
+									return false;
+								}
+							}
+							return true;
+						}
+					}
+					else
+					{
+						return false;
+					}
 				}
 				else if(tile.firstChild.alt.includes("king"))
 				{
@@ -184,7 +263,93 @@
 				}
 				else if(tile.firstChild.alt.includes("queen"))
 				{
-					return true;
+					let diagonally =
+					function()
+					{
+						if(
+							Math.abs(tile.position.column - this.position.column) ===
+							Math.abs(tile.position.row - this.position.row))
+						{
+							let lower_position =
+								Math.min(this.position.offset(), tile.position.offset());
+							let higher_position =
+								Math.max(this.position.offset(), tile.position.offset());
+
+							if(this.position.column < tile.position.column)
+							{
+								for(
+									let position = lower_position + 7;
+									position < higher_position;
+									position += 7)
+								{
+									if(tiles[position].hasChildNodes())
+									{
+										return false;
+									}
+								}
+								return true;
+							}
+							else
+							{
+								for(
+									let position = lower_position + 9;
+									position < higher_position;
+									position += 9)
+								{
+									if(tiles[position].hasChildNodes())
+									{
+										return false;
+									}
+								}
+								return true;
+							}
+						}
+						else
+						{
+							return false;
+						}
+					};
+
+					let not_diagonally = function()
+					{
+						if(this.position.row === tile.position.row)
+						{
+							let lower_position =
+								Math.min(this.position.offset(), tile.position.offset()) + 1;
+							let higher_position =
+								Math.max(this.position.offset(), tile.position.offset());
+
+							for(;lower_position < higher_position; ++lower_position)
+							{
+								if(tiles[lower_position].hasChildNodes())
+								{
+									return false;
+								}
+							}
+							return true;
+						}
+						else if(this.position.column === tile.position.column)
+						{
+							let lower_position =
+								Math.min(this.position.offset(), tile.position.offset()) + 8;
+							let higher_position =
+								Math.max(this.position.offset(), tile.position.offset());
+
+							for(;lower_position < higher_position; lower_position += 8)
+							{
+								if(tiles[lower_position].hasChildNodes())
+								{
+									return false;
+								}
+							}
+							return true;
+						}
+						else
+						{
+							return false;
+						}
+					}
+					return diagonally.call(this) || not_diagonally.call(this);
 				}
 				else
 				{
@@ -193,7 +358,13 @@
 					return false;
 				}
 			}
-			tiles[i].position = {"row" : Math.floor(i / 8), "column" : i % 8};
+
+			tiles[i].position =
+				{
+					"row" : Math.floor(i / 8),
+					"column" : i % 8,
+					"offset" : function() {return this.row * 8 + this.column;}
+				};
 			tiles[i].addEventListener(
 				"click",
 				function()
@@ -217,7 +388,7 @@
 								return;
 							}
 
-							if(!this.is_reachable(selected_tile))
+							if(!this.is_reachable_from(selected_tile))
 							{
 								return;
 							}
@@ -230,7 +401,7 @@
 							return;
 						}
 
-						if(!this.is_reachable(selected_tile))
+						if(!this.is_reachable_from(selected_tile))
 						{
 							return;
 						}
