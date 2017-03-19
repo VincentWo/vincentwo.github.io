@@ -127,52 +127,86 @@
 		
 		let selected_tile = undefined;
 		let current_player = "white";
+
 		for(let i = 0; i < tiles.length; ++i)
 		{
-			tiles[i].is_reachable_from =
+			tiles[i].is_dangerous = 
+			function(color)
+			{
+				for(let i = 0; i < tiles.length; ++i)
+				{
+					if(tiles[i].childElementCount !== 0)
+					{
+						if(tiles[i].firstChild.classList[0] !== color)
+						{
+							if(tiles[i] !== this && tiles[i].can_capture(this))
+							{
+								return true;
+							}
+						}
+					}
+				}
+				return false;
+			}
+			tiles[i].can_capture =
 			function(tile)
 			{
-				if(tile.firstChild.alt.includes("pawn"))
+				if(this.firstChild.alt.includes("pawn"))
 				{
-					if(!this.hasChildNodes())
+					return Math.abs(this.position.column - tile.position.column) === 1 &&
+					       Math.abs(this.position.row - tile.position.row) === 1;
+				}
+				else
+				{
+					return this.can_reach(tile);
+				}
+			}
+			tiles[i].can_reach =
+			function(tile)
+			{
+				if(this.firstChild.alt.includes("pawn"))
+				{
+					if(!tile.hasChildNodes())
 					{
-						if(tile.firstChild.alt.includes("black"))
+						if(this.firstChild.alt.includes("black"))
 						{
 							return tile.position.column === this.position.column &&
-							       (tile.position.row - this.position.row === 1 ||
-											tile.position.row === 6 &&
-											tile.position.row - this.position.row === 2);
+							       (this.position.row - tile.position.row === 1 ||
+											this.position.row === 6 &&
+											this.position.row - tile.position.row === 2 &&
+										  tiles[this.position.offset() - 8].childElementCount === 0);
 						}
 						else
 						{
 							return tile.position.column === this.position.column &&
-								     (tile.position.row - this.position.row === -1 ||
-							        tile.position.row === 1 &&
-							        tile.position.row - this.position.row === -2);
+								     (this.position.row - tile.position.row === -1 ||
+							        this.position.row === 1 &&
+							        this.position.row - tile.position.row === -2 &&
+										  tiles[this.position.offset() + 8].childElementCount === 0);
 						}
 					}
 					else
 					{
-						if(tile.firstChild.alt.includes("black"))
+						if(this.firstChild.alt.includes("black"))
 						{
 							return Math.abs(tile.position.column - this.position.column) === 1 &&
-							       tile.position.row - this.position.row === 1;
+							       this.position.row - tile.position.row === 1;
 						}
 						else
 						{
 							return Math.abs(tile.position.column - this.position.column) === 1 &&
-							       tile.position.row - this.position.row === -1;
+							       this.position.row - tile.position.row === -1;
 						}
 					}
 				}
-				else if(tile.firstChild.alt.includes("rook"))
+				else if(this.firstChild.alt.includes("rook"))
 				{
 					if(this.position.row === tile.position.row)
 					{
 						let lower_position =
-							Math.min(this.position.offset(), tile.position.offset()) + 1;
+							Math.min(tile.position.offset(), this.position.offset()) + 1;
 						let higher_position =
-							Math.max(this.position.offset(), tile.position.offset());
+							Math.max(tile.position.offset(), this.position.offset());
 
 						for(;lower_position < higher_position; ++lower_position)
 						{
@@ -186,9 +220,9 @@
 					else if(this.position.column === tile.position.column)
 					{
 						let lower_position =
-							Math.min(this.position.offset(), tile.position.offset()) + 8;
+							Math.min(tile.position.offset(), this.position.offset()) + 8;
 						let higher_position =
-							Math.max(this.position.offset(), tile.position.offset());
+							Math.max(tile.position.offset(), this.position.offset());
 
 						for(;lower_position < higher_position; lower_position += 8)
 						{
@@ -204,14 +238,14 @@
 						return false;
 					}
 				}
-				else if(tile.firstChild.alt.includes("knight"))
+				else if(this.firstChild.alt.includes("knight"))
 				{
 					return Math.abs(tile.position.column - this.position.column) === 1 &&
 					       Math.abs(tile.position.row - this.position.row) === 2 ||
 				         Math.abs(tile.position.column - this.position.column) === 2 &&
 					       Math.abs(tile.position.row - this.position.row) === 1;
 				}
-				else if(tile.firstChild.alt.includes("bishop"))
+				else if(this.firstChild.alt.includes("bishop"))
 				{
 					if(
 						Math.abs(tile.position.column - this.position.column) ===
@@ -222,7 +256,7 @@
 						let higher_position =
 							Math.max(this.position.offset(), tile.position.offset());
 
-						if(this.position.column < tile.position.column)
+						if(tile.position.column < this.position.column)
 						{
 							for(
 								let position = lower_position + 7;
@@ -256,12 +290,13 @@
 						return false;
 					}
 				}
-				else if(tile.firstChild.alt.includes("king"))
+				else if(this.firstChild.alt.includes("king"))
 				{
 					return Math.abs(tile.position.column - this.position.column) <= 1 &&
-						     Math.abs(tile.position.row - this.position.row) <= 1;
+						     Math.abs(tile.position.row - this.position.row) <= 1 &&
+					       !tile.is_dangerous(this.firstChild.classList[0]);
 				}
-				else if(tile.firstChild.alt.includes("queen"))
+				else if(this.firstChild.alt.includes("queen"))
 				{
 					let diagonally =
 					function()
@@ -275,7 +310,7 @@
 							let higher_position =
 								Math.max(this.position.offset(), tile.position.offset());
 
-							if(this.position.column < tile.position.column)
+							if(tile.position.column < this.position.column)
 							{
 								for(
 									let position = lower_position + 9;
@@ -312,7 +347,7 @@
 
 					let not_diagonally = function()
 					{
-						if(this.position.row === tile.position.row)
+						if(tile.position.row === this.position.row)
 						{
 							let lower_position =
 								Math.min(this.position.offset(), tile.position.offset()) + 1;
@@ -354,6 +389,7 @@
 				else
 				{
 					console.error("This should never happen.");
+					console.error(this);
 					console.error(tile);
 					return false;
 				}
@@ -388,7 +424,7 @@
 								return;
 							}
 
-							if(!this.is_reachable_from(selected_tile))
+							if(!selected_tile.can_reach(this))
 							{
 								return;
 							}
@@ -401,7 +437,7 @@
 							return;
 						}
 
-						if(!this.is_reachable_from(selected_tile))
+						if(!selected_tile.can_reach(this))
 						{
 							return;
 						}
