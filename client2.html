@@ -123,264 +123,277 @@
 				<td class="tile white_tile"></td>
 			</tr>
 		</table>
-	</body>
-	<script>
-		"use strict";
-		const columns = 8;
-		const rows = 8;
+		<script>
+			"use strict";
+			const columns = 8;
+			const rows = 8;
 
-		let tiles = document.getElementsByClassName("tile");
-		let position =
-			function(offset, row)
-			{
-				if(row !== undefined)
+			let tiles = document.getElementsByClassName("tile");
+			let position =
+				function(offset, row)
 				{
-					this.column = offset;
-					this.row = row;
-				}
-				else
-				{
-					this.row = Math.floor(offset / columns);
-					this.column = offset % columns;
-				}
-
-				this.offset =
-					function()
+					if(row !== undefined)
 					{
-						return this.row * columns + this.column;
+						this.column = offset;
+						this.row = row;
 					}
-			}
-
-		let path = 
-			function(begin, end)
-			{
-				this[Symbol.iterator] = 
-					function()
+					else
 					{
-						let current_position = new position(begin.column, begin.row);
-						let end_position = new position(end.column, end.row);
-				
-						let new_column = undefined;
-						let new_row = undefined;
+						this.row = Math.floor(offset / columns);
+						this.column = offset % columns;
+					}
 
-						if(begin.column < end.column)
+					this.offset =
+						function()
 						{
-							new_column = (column) => column + 1;
+							return this.row * columns + this.column;
 						}
-						else if(begin.column === end.column)
-						{
-							new_column = (column) => column;
-						}
-						else if(begin.column > end.column)
-						{
-							new_column = (column) => column - 1;
-						}
+				}
 
-						if(begin.row < end.row)
+			let path = 
+				function(begin, end)
+				{
+					this[Symbol.iterator] = 
+						function()
 						{
-							new_row = (row) => row + 1
-						}
-						else if(begin.row === end.row)
-						{
-							new_row = (row) => row;
-						}
-						else if(begin.row > end.row)
-						{
-							new_row = (row) => row - 1;
-						}
+							let current_position = new position(begin.column, begin.row);
+							let end_position = new position(end.column, end.row);
+					
+							let new_column = undefined;
+							let new_row = undefined;
 
-						let new_position =
-							function(old_position)
+							if(begin.column < end.column)
 							{
-								return new position(new_column(old_position.column),
-																		new_row(old_position.row));
+								new_column = (column) => column + 1;
 							}
-						return {
-								"next" :
-									function()
-									{
-										current_position = new_position(current_position);
-
-										return {
-												"done" :
-													current_position.row === end_position.row &&
-													current_position.column === end_position.column,
-
-												"value" : current_position
-											}
-									}
+							else if(begin.column === end.column)
+							{
+								new_column = (column) => column;
 							}
-					}
-			}
-		let free_path =
-			function(begin, end)
-			{
-				for(let position of new path(begin, end))
+							else if(begin.column > end.column)
+							{
+								new_column = (column) => column - 1;
+							}
+
+							if(begin.row < end.row)
+							{
+								new_row = (row) => row + 1
+							}
+							else if(begin.row === end.row)
+							{
+								new_row = (row) => row;
+							}
+							else if(begin.row > end.row)
+							{
+								new_row = (row) => row - 1;
+							}
+
+							let new_position =
+								function(old_position)
+								{
+									return new position(new_column(old_position.column),
+																			new_row(old_position.row));
+								}
+							return {
+									"next" :
+										function()
+										{
+											current_position = new_position(current_position);
+
+											return {
+													"done" :
+														current_position.row === end_position.row &&
+														current_position.column === end_position.column,
+
+													"value" : current_position
+												}
+										}
+								}
+						}
+				}
+			let free_path =
+				function(begin, end)
 				{
-					if(tiles[position.offset()].hasChildNodes())
+					for(let position of new path(begin, end))
+					{
+						if(tiles[position.offset()].hasChildNodes())
+						{
+							return false;
+						}
+					}
+					return true;
+				}
+			let create_piece =
+			function(type, color, tile)
+			{
+				let node = document.createElement("img");
+				node.src = color + "_" + type + ".svg";
+				node.alt = color + " " + type;
+				node.color = color;
+				node.type = type;
+				node.tile = tile;
+
+				
+				let pawn_can_capture = 
+				function(tile_position)
+				{
+					return Math.abs(this.tile.position.column - tile_position.column) === 1 &&
+								 ((color === "white") ?
+									tile_position.row === this.tile.position.row - 1 :
+									tile_position.row === this.tile.position.row + 1);
+				}
+
+				let pawn_can_reach =
+				function(tile_position)
+				{
+					if(this.tile.position.column === tile_position.column)
+					{
+						if(this.color === "white")
+						{
+							if(this.tile.position.row === 6 && tile_position.row === 4 &&
+								 !tiles[new position(tile_position.column, 5).offset()]
+									.hasChildNodes())
+							{
+								return true;
+							}
+							else
+							{
+								return tile_position.row === this.tile.position.row - 1 &&
+											 tile_position.column === this.tile.position.column;
+							}
+						}
+						else
+						{
+							if(this.tile.position.row === 1 && tile_position.row === 3 &&
+								 !tiles[new position(tile_position.column, 2).offset()]
+									.hasChildNodes())
+							{
+								return true;
+							}
+							else
+							{
+								return tile_position.row === this.tile.position.row + 1 &&
+											 tile_position.column === this.tile.position.column;
+							}
+						}
+					}
+					else 
 					{
 						return false;
 					}
 				}
-				return true;
-			}
-		let create_piece =
-		function(type, color, tile)
-		{
-			let node = document.createElement("img");
-			node.src = color + "_" + type + ".svg";
-			node.alt = color + " " + type;
-			node.color = color;
-			node.type = type;
-			node.tile = tile;
-
-			
-			let pawn_can_capture = 
-			function(tile_position)
-			{
-				return Math.abs(this.tile.position.column - tile_position.column) === 1 &&
-				       ((color === "white") ?
-				        tile_position.row === this.tile.position.row - 1 :
-					      tile_position.row === this.tile.position.row + 1);
-			}
-
-			let pawn_can_reach =
-			function(tile_position)
-			{
-				if(this.tile.position.column === tile_position.column)
+				let rook_can_reach =
+				function(tile_position)
 				{
-					if(this.color === "white")
+					if(this.tile.position.row === tile_position.row ||
+						 this.tile.position.column === tile_position.column)
 					{
-						if(this.tile.position.row === 6 && tile_position.row === 4 &&
-							 !tiles[new position(tile_position.column, 5).offset()]
-						   	.hasChildNodes())
-						{
-							return true;
-						}
-						else
-						{
-							return tile_position.row === this.tile.position.row - 1 &&
-							       tile_position.column === this.tile.position.column;
-						}
+						return free_path(this.tile.position, tile_position);
 					}
 					else
 					{
-						if(this.tile.position.row === 1 && tile_position.row === 3 &&
-							 !tiles[new position(tile_position.column, 2).offset()]
-						   	.hasChildNodes())
+						return false;
+					}
+				}
+				let knight_can_reach = 
+				function(tile_position)
+				{
+					if(Math.abs(this.tile.position.column - tile_position.column) === 2)
+					{
+						return Math.abs(this.tile.position.row - tile_position.row) === 1;
+					}
+					else if(Math.abs(this.tile.position.column - tile_position.column) === 1)
+					{
+						return Math.abs(this.tile.position.row - tile_position.row) === 2;
+					}
+				}
+				let bishop_can_reach =
+				function(tile_position)
+				{
+					if(Math.abs(this.tile.position.row - tile_position.row) ===
+						 Math.abs(this.tile.position.column - tile_position.column))
+					{
+						return free_path(this.tile.position, tile_position);
+					}
+				}
+				let queen_can_reach =
+				function(tile_position)
+				{
+					return bishop_can_reach.call(this, tile_position) ||
+								 rook_can_reach.call(this, tile_position);
+				}
+				let king_can_reach =
+				function(tile_position)
+				{
+					if(Math.abs(this.tile.position.row - tile_position.row) <= 1 &&
+						 Math.abs(this.tile.position.column -  tile_position.column) <= 1)
+					{
+						this.tile.removeChild(this);
+						let is_dangerous = tiles[tile_position.offset()].dangerous_for(this.color);
+						this.tile.appendChild(this);
+
+						return !is_dangerous;
+					}
+				}
+
+				if(type === "pawn")
+				{
+					node.can_capture = pawn_can_capture;
+					node.can_reach = pawn_can_reach;
+				}
+				else if(type === "rook")
+				{
+					node.can_capture = rook_can_reach;
+					node.can_reach = rook_can_reach;
+				}
+				else if(type === "knight")
+				{
+					node.can_capture = knight_can_reach;
+					node.can_reach = knight_can_reach;
+				}
+				else if(type === "bishop")
+				{
+					node.can_capture = bishop_can_reach;
+					node.can_reach = bishop_can_reach;
+				}
+				else if(type === "queen")
+				{
+					node.can_capture = queen_can_reach;
+					node.can_reach = queen_can_reach;
+				}
+				else if(type === "king")
+				{
+					node.can_capture = king_can_reach;
+					node.can_reach = king_can_reach;
+				}
+
+				let move_piece =
+					function(piece, position)
+					{
+						piece.tile.removeChild(piece)
+						tiles[position.offset()].appendChild(piece);
+						piece.tile = tiles[position.offset()];
+					}
+				node.try_move =
+					function(position)
+					{
+						if(this.can_reach(position))
 						{
+							move_piece(this, position);
 							return true;
 						}
 						else
 						{
-							return tile_position.row === this.tile.position.row + 1 &&
-							       tile_position.column === this.tile.position.column;
+							return false;
 						}
 					}
-				}
-				else 
+				node.try_capture =
+					function(piece)
 				{
-					return false;
-				}
-			}
-			let rook_can_reach =
-			function(tile_position)
-			{
-				if(this.tile.position.row === tile_position.row ||
-				   this.tile.position.column === tile_position.column)
-				{
-					return free_path(this.tile.position, tile_position);
-				}
-				else
-				{
-					return false;
-				}
-			}
-			let knight_can_reach = 
-			function(tile_position)
-			{
-				if(Math.abs(this.tile.position.column - tile_position.column) === 2)
-				{
-					return Math.abs(this.tile.position.row - tile_position.row) === 1;
-				}
-				else if(Math.abs(this.tile.position.column - tile_position.column) === 1)
-				{
-					return Math.abs(this.tile.position.row - tile_position.row) === 2;
-				}
-			}
-			let bishop_can_reach =
-			function(tile_position)
-			{
-				if(Math.abs(this.tile.position.row - tile_position.row) ===
-				   Math.abs(this.tile.position.column - tile_position.column))
-				{
-					return free_path(this.tile.position, tile_position);
-				}
-			}
-			let queen_can_reach =
-			function(tile_position)
-			{
-				return bishop_can_reach.call(this, tile_position) ||
-				       rook_can_reach.call(this, tile_position);
-			}
-			let king_can_reach =
-			function(tile_position)
-			{
-				if(Math.abs(this.tile.position.row - tile_position.row) <= 1 &&
-				   Math.abs(this.tile.position.column -  tile_position.column) <= 1)
-				{
-					this.tile.removeChild(this);
-					let is_dangerous = tiles[tile_position.offset()].dangerous_for(this.color);
-					this.tile.appendChild(this);
-
-					return !is_dangerous;
-				}
-			}
-
-			if(type === "pawn")
-			{
-				node.can_capture = pawn_can_capture;
-				node.can_reach = pawn_can_reach;
-			}
-			else if(type === "rook")
-			{
-				node.can_capture = rook_can_reach;
-				node.can_reach = rook_can_reach;
-			}
-			else if(type === "knight")
-			{
-				node.can_capture = knight_can_reach;
-				node.can_reach = knight_can_reach;
-			}
-			else if(type === "bishop")
-			{
-				node.can_capture = bishop_can_reach;
-				node.can_reach = bishop_can_reach;
-			}
-			else if(type === "queen")
-			{
-				node.can_capture = queen_can_reach;
-				node.can_reach = queen_can_reach;
-			}
-			else if(type === "king")
-			{
-				node.can_capture = king_can_reach;
-				node.can_reach = king_can_reach;
-			}
-
-			let move_piece =
-				function(piece, position)
-				{
-					piece.tile.removeChild(piece)
-					tiles[position.offset()].appendChild(piece);
-					piece.tile = tiles[position.offset()];
-				}
-			node.try_move =
-				function(position)
-				{
-					if(this.can_reach(position))
+					if(this.can_capture(piece.tile.position))
 					{
-						move_piece(this, position);
+						piece.tile.removeChild(piece);
+						move_piece(this, piece.tile.position);
 						return true;
 					}
 					else
@@ -388,147 +401,134 @@
 						return false;
 					}
 				}
-			node.try_capture =
-				function(piece)
-			{
-				if(this.can_capture(piece.tile.position))
-				{
-					piece.tile.removeChild(piece);
-					move_piece(this, piece.tile.position);
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+
+				tile.appendChild(node);
 			}
 
-			tile.appendChild(node);
-		}
-
-				let initialise = 
-		function(tiles)
-		{
-			let initialise =
-			function(start, color)
+					let initialise = 
+			function(tiles)
 			{
-				create_piece("rook", color, tiles[start]);
-				create_piece("knight", color, tiles[++start])
-				create_piece("bishop", color, tiles[++start])
-				create_piece("queen", color, tiles[++start])
-				create_piece("king", color, tiles[++start])
-				create_piece("bishop", color, tiles[++start])
-				create_piece("knight", color, tiles[++start])
-				create_piece("rook", color, tiles[++start])
-			};
-			let fill_pawns =
+				let initialise =
 				function(start, color)
 				{
-					let end = start + 8;
-					for(;start < end; ++start)
-					{
-						create_piece("pawn", color, tiles[start]);
-					}
+					create_piece("rook", color, tiles[start]);
+					create_piece("knight", color, tiles[++start])
+					create_piece("bishop", color, tiles[++start])
+					create_piece("queen", color, tiles[++start])
+					create_piece("king", color, tiles[++start])
+					create_piece("bishop", color, tiles[++start])
+					create_piece("knight", color, tiles[++start])
+					create_piece("rook", color, tiles[++start])
 				};
-
-			initialise(0, "black");
-			fill_pawns(8, "black");
-			fill_pawns(48, "white");
-			initialise(56, "white");
-
-			let current_player = "white";
-			let next_player = 
-				function()
-				{
-					unselect_tile();
-					if(current_player === "white")
+				let fill_pawns =
+					function(start, color)
 					{
-						current_player = "black";
-					}
-					else
-					{
-						current_player = "white";
-					}
-				}
-
-			let selected_tile = undefined;
-			let select_tile =
-				function(tile)
-				{
-					unselect_tile();
-					selected_tile = tile;
-					selected_tile.classList.add("selected");
-				}
-			let unselect_tile =
-				function()
-				{
-					if(selected_tile !== undefined)
-					{
-						selected_tile.classList.remove("selected");
-					}
-					selected_tile = undefined;
-				}
-			for(let i = 0; i < tiles.length; ++i)
-			{
-				tiles[i].position = new position(i);
-				tiles[i].dangerous_for =
-					function(color)
-					{
-						for(let tile of tiles)
+						let end = start + 8;
+						for(;start < end; ++start)
 						{
-							if(tile !== this &&
-							   tile.hasChildNodes() &&
-								 tile.firstChild.color !== color)
-							{
-								if(tile.firstChild.type === "king" &&
-								   Math.abs(tile.position.row - this.position.row) <= 1 &&
-								   Math.abs(tile.position.column - this.position.column) <= 1)
-								{
-									return true;
-								}
-								else if(tile.firstChild.can_capture(this.position))
-								{
-									return true;
-								}
-							}
+							create_piece("pawn", color, tiles[start]);
 						}
-						return false;
-					}
-				tiles[i].addEventListener(
-					"click",
+					};
+
+				initialise(0, "black");
+				fill_pawns(8, "black");
+				fill_pawns(48, "white");
+				initialise(56, "white");
+
+				let current_player = "white";
+				let next_player = 
 					function()
 					{
-						if(this.hasChildNodes())
+						unselect_tile();
+						if(current_player === "white")
 						{
-							if(this.firstChild.color === current_player)
+							current_player = "black";
+						}
+						else
+						{
+							current_player = "white";
+						}
+					}
+
+				let selected_tile = undefined;
+				let select_tile =
+					function(tile)
+					{
+						unselect_tile();
+						selected_tile = tile;
+						selected_tile.classList.add("selected");
+					}
+				let unselect_tile =
+					function()
+					{
+						if(selected_tile !== undefined)
+						{
+							selected_tile.classList.remove("selected");
+						}
+						selected_tile = undefined;
+					}
+				for(let i = 0; i < tiles.length; ++i)
+				{
+					tiles[i].position = new position(i);
+					tiles[i].dangerous_for =
+						function(color)
+						{
+							for(let tile of tiles)
 							{
-								select_tile(this);
+								if(tile !== this &&
+									 tile.hasChildNodes() &&
+									 tile.firstChild.color !== color)
+								{
+									if(tile.firstChild.type === "king" &&
+										 Math.abs(tile.position.row - this.position.row) <= 1 &&
+										 Math.abs(tile.position.column - this.position.column) <= 1)
+									{
+										return true;
+									}
+									else if(tile.firstChild.can_capture(this.position))
+									{
+										return true;
+									}
+								}
+							}
+							return false;
+						}
+					tiles[i].addEventListener(
+						"click",
+						function()
+						{
+							if(this.hasChildNodes())
+							{
+								if(this.firstChild.color === current_player)
+								{
+									select_tile(this);
+								}
+								else
+								{
+									if(selected_tile !== undefined)
+									{
+										if(selected_tile.firstChild.try_capture(this.firstChild))
+										{
+											next_player();
+										}
+									}
+								}
 							}
 							else
 							{
 								if(selected_tile !== undefined)
 								{
-									if(selected_tile.firstChild.try_capture(this.firstChild))
+									if(selected_tile.firstChild.try_move(this.position))
 									{
 										next_player();
 									}
 								}
 							}
-						}
-						else
-						{
-							if(selected_tile !== undefined)
-							{
-								if(selected_tile.firstChild.try_move(this.position))
-								{
-									next_player();
-								}
-							}
-						}
-					});
+						});
+				}
 			}
-		}
 
-		initialise(tiles);
-	</script>
+			initialise(tiles);
+		</script>
+	</body>
 </html>
