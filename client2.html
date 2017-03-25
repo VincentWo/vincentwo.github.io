@@ -4,6 +4,10 @@
 		<meta charset="utf8">
 		<title>Schach Test</title>
 		<style>
+			html
+			{
+				background-color: grey;
+			}
 			*
 			{
 				padding: 0;
@@ -30,6 +34,15 @@
 			.selected
 			{
 				background-color: grey
+			}
+			table
+			{
+				float: left
+			}
+			p
+			{
+
+				float: left
 			}
 			td>img
 			{
@@ -123,6 +136,12 @@
 				<td class="tile white_tile"></td>
 			</tr>
 		</table>
+		<div id="captured_white_pieces">
+			<h1>Captured by black:</h1>
+		</div>
+		<div id="captured_black_pieces">
+			<h1>Captured by white:</h1>
+		</div>
 		<script>
 			"use strict";
 			const columns = 8;
@@ -367,6 +386,22 @@
 					node.can_reach = king_can_reach;
 				}
 
+				let capture =
+					function(piece)
+					{
+						piece.tile.removeChild(piece);
+
+						let storage = undefined;
+						if(piece.color === "white")
+						{
+							storage = document.getElementById("captured_white_pieces");
+						}
+						else
+						{
+							storage = document.getElementById("captured_black_pieces");
+						}
+						storage.appendChild(piece);
+					}
 				let move_piece =
 					function(piece, position)
 					{
@@ -389,18 +424,18 @@
 					}
 				node.try_capture =
 					function(piece)
-				{
-					if(this.can_capture(piece.tile.position))
 					{
-						piece.tile.removeChild(piece);
-						move_piece(this, piece.tile.position);
-						return true;
+						if(this.can_capture(piece.tile.position))
+						{
+							capture(piece);
+							move_piece(this, piece.tile.position);
+							return true;
+						}
+						else
+						{
+							return false;
+						}
 					}
-					else
-					{
-						return false;
-					}
-				}
 
 				tile.appendChild(node);
 			}
